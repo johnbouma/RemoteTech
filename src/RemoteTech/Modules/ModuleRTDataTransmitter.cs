@@ -24,12 +24,6 @@ namespace RemoteTech.Modules
         private bool isBusy;
         private readonly List<ScienceData> scienceDataQueue = new List<ScienceData>();
 
-        /// <summary> When a transmission almost succeed but not totally (issue #667), 
-        /// e.g. the probe transmitted 9.999999 instead of 10 due to a floating point error in KSP.
-        /// We use this constant value as a size to be added to the last sent packet.
-        /// </summary>
-        private const float LastPacketAddtionalSize = 0.1f;
-
         // Compatible with ModuleDataTransmitter
         public override void OnLoad(ConfigNode node)
         {
