@@ -121,11 +121,16 @@ namespace RemoteTech.Modules
                         power -= PacketResourceCost;
 
                         // transmitted size
-                        float frame = Math.Min(PacketSize, dataAmount);
+                        // #714 :   Track amount of data sent separately from
+                        //          the actual amount of data sent
+                        float actualDataSent = Math.Min(PacketSize, dataAmount);
+                        
+                        // #714 :   Always send a PacketSize frame
+                        float sentFrameSize = PacketSize;
 
                         // subtract current packet size from data left to transmit
                         // and clamp it to 1 digit precision to avoid large float precision error (#667)
-                        dataAmount -= frame;
+                        dataAmount -= actualDataSent;
                         dataAmount = (float)Math.Round(dataAmount, 1);
 
                         packets--;
@@ -142,23 +147,15 @@ namespace RemoteTech.Modules
                         {
                             RTLog.Notify(
                                 "[Transmitter]: PacketSize: {0}; Transmitted size (frame): {1}; Data left to transmit (dataAmount): {2}; Packets left (packets): {3}",
-                                PacketSize, frame, dataAmount, packets);
+                                PacketSize, actualDataSent, dataAmount, packets);
 
                             // use try / catch to prevent NRE spamming in KSP code when RT is used with other mods.
                             try
                             {
-                                // check if it's the last packet to send
-                                if (packets == 0)
-                                {
-                                    // issue #667 ; floating point error in RnDCommsStream.StreamData method when adding to dataIn private field
-                                    // e.g scienceData.dataAmount is 10 but in the end RnDCommsStream.dataIn will be 9.999999, so the science never
-                                    //     gets registered to the ResearchAndDevelopment center.
-                                    // we just need to add a little amount to the last packet so it goes over the packet size:
-                                    // KSP will clamp the final size to PacketSize anyway.
-                                    frame += LastPacketAddtionalSize;
-                                }
-
-                                commStream.StreamData(frame, vessel.protoVessel);
+                                //714:      We are always sending a full frame, 
+                                //          no matter the amount of data actually 
+                                //          being sent.
+                                commStream.StreamData(sentFrameSize, vessel.protoVessel);
                             }
                             catch (NullReferenceException nre)
                             {
